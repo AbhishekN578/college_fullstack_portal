@@ -1,0 +1,86 @@
+/* FULL PAGE BACKGROUND + CENTERING */
+.page-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #f5f5f5;
+  min-height: 100vh;
+  padding-top: 50px;
+}
+
+/* FORM CARD */
+.post-form-container {
+  width: 450px;
+  background: #fff;
+  padding: 30px 35px;
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADING */
+.post-form-container h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #222;
+  letter-spacing: 0.3px;
+}
+
+/* LABEL */
+.post-form-container label {
+  font-size: 15px;
+  margin-bottom: 6px;
+  color: #333;
+  font-weight: 600;
+}
+
+/* TEXT INPUT */
+.input-box,
+.file-input,
+.textarea-box {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  transition: 0.2s ease;
+  background: #fafafa;
+}
+
+/* TEXTAREA */
+.textarea-box {
+  height: 130px;
+  resize: none;
+}
+
+/* FOCUS EFFECT */
+.input-box:focus,
+.textarea-box:focus {
+  border-color: #5a7df2;
+  box-shadow: 0 0 8px rgba(90, 125, 242, 0.3);
+  background: #fff;
+}
+
+/* SUBMIT BUTTON */
+.submit-button {
+  background: #4a6cf7;
+  border: none;
+  padding: 13px;
+  color: white;
+  font-size: 17px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.25s ease;
+  margin-top: 10px;
+}
+
+.submit-button:hover {
+  background: #3857e0;
+  transform: translateY(-2px);
+}
+.submit-button:active {
+  transform: translateY(0);
+}
