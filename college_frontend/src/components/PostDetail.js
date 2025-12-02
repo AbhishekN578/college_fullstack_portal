@@ -1,130 +1,174 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useContext } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import API from "../services/api";
 import AddComment from "./AddComment";
+import { AuthContext } from "../context/AuthContext";
 import "./PostDetail.css";
 
 function PostDetail() {
+  const { user, logout } = useContext(AuthContext);
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [likes, setLikes] = useState(0);
   const [likedByUser, setLikedByUser] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  // Load Post + Comments
   useEffect(() => {
-    async function fetchData() {
+    const fetchPostData = async () => {
       try {
-        const postRes = await API.get(`posts/${id}/`);
-        const commentsRes = await API.get("comments/");
+        const res = await API.get(`posts/${id}/`);
 
-        setPost(postRes.data);
-        setComments(commentsRes.data.filter((c) => c.post === parseInt(id)));
-        setLikes(postRes.data.likes || 0);
-        setLikedByUser(postRes.data.liked_by_user || false);
-      } catch (error) {
-        console.error("Fetch Error:", error);
+        setPost(res.data);
+        setLikes(res.data.likes_count);
+        setLikedByUser(res.data.liked_by_user);
+
+        const commentRes = await API.get("comments/");
+        setComments(commentRes.data.filter((c) => c.post === Number(id)));
+      } catch (err) {
+        console.error("Error loading post:", err);
       }
       setLoading(false);
-    }
+    };
 
-    fetchData();
+    fetchPostData();
   }, [id]);
 
-  const handleLikeToggle = async () => {
+  // Like Toggle
+  const handleLike = async () => {
+    if (!user) {
+      alert("Please login to like posts.");
+      return;
+    }
+
     try {
-      if (!likedByUser) {
-        await API.post(`posts/${id}/like/`);
-        setLikes(likes + 1);
-      } else {
-        await API.post(`posts/${id}/unlike/`);
-        setLikes(likes - 1);
-      }
-      setLikedByUser(!likedByUser);
-    } catch (error) {
-      console.error("Like Toggle Error:", error);
+      const res = await API.post(`posts/${id}/like/`);
+      setLikes(res.data.likes_count);
+      setLikedByUser(res.data.liked_by_user);
+    } catch (err) {
+      console.error("Like error:", err);
+      alert("Could not like the post. Please try again.");
     }
   };
 
+  // Delete Post
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    if (!window.confirm("Delete this post?")) return;
 
     try {
       await API.delete(`posts/${id}/`);
-      alert("Post deleted successfully.");
-      navigate("/"); // redirect to homepage or posts list
-    } catch (error) {
-      console.error("Delete Error:", error);
+      alert("Post deleted.");
+      navigate("/");
+    } catch (err) {
       alert("Failed to delete post.");
     }
   };
 
-  if (loading) return <h3 className="center-text">Loading...</h3>;
-  if (!post) return <h3 className="center-text">Post not found.</h3>;
+  // Logout
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  // Handle new comment added
+  const handleCommentAdded = (newComment) => {
+    setComments((prev) => [...prev, newComment]);
+  };
+
+  if (loading) return <h2>Loading...</h2>;
+  if (!post) return <h2>Post not found</h2>;
 
   return (
-    <div className="post-detail-container">
-      {/* Headlines */}
-      <div className="main-headline">College Commentary Portal</div>
-      <div className="sub-headline">College News</div>
-
-      {/* Post Title */}
-      <h2>{post.title}</h2>
-
-      {/* Post Content */}
-      <p>{post.content}</p>
-
-      {/* Image Preview */}
-      {post.image && <img src={`http://localhost:8000${post.image}`} alt="Post" />}
-
-      {/* File Preview */}
-      {post.exam_file && (
-        <div className="file-download">
-          <h4>Attached File:</h4>
-          <a href={`http://localhost:8000${post.exam_file}`} download>
-            Download File
-          </a>
-        </div>
-      )}
-
-      {/* Like, Comment & Delete Buttons */}
-      <div className="buttons">
-        <button className="like-btn" onClick={handleLikeToggle}>
-          {likedByUser ? "Unlike" : "Like"} ({likes})
-        </button>
-        <button
-          className="comment-btn"
-          onClick={() =>
-            document.querySelector(".add-comment").scrollIntoView({ behavior: "smooth" })
-          }
-        >
-          Comment
-        </button>
-        <button className="delete-btn" onClick={handleDelete}>
-          Delete Post
-        </button>
-      </div>
-
-      <hr />
-
-      {/* Comments */}
-      <h3>Comments</h3>
-      {comments.length === 0 ? (
-        <p className="no-comments">No comments yet.</p>
-      ) : (
+    <div className="portal-container">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <h3>College News</h3>
         <ul>
-          {comments.map((c) => (
-            <li key={c.id}>{c.comment}</li>
-          ))}
+          {!user ? (
+            <>
+              <li><Link to="/login">Login</Link></li>
+              <li><Link to="/register">Register</Link></li>
+            </>
+          ) : (
+            <>
+              <li><Link to="/profile">Profile</Link></li>
+              <li>
+                <button className="logout-btn" onClick={handleLogout}>
+                  Logout
+                </button>
+              </li>
+            </>
+          )}
         </ul>
-      )}
+      </aside>
 
-      {/* Add Comment Form */}
-      <div className="add-comment">
-        <AddComment postId={id} />
-      </div>
+      {/* Main Content */}
+      <main className="main-content">
+        <h1>{post.title}</h1>
+        <p>{post.content}</p>
+
+        {post.image && (
+          <img
+            src={`http://localhost:8000${post.image}`}
+            alt="Post"
+            className="post-image"
+          />
+        )}
+
+        {/* Download File */}
+        {post.exam_file && (
+          <div className="file-download">
+            <h4>Download File</h4>
+            <a href={`http://localhost:8000${post.exam_file}`} download>
+              Click here
+            </a>
+          </div>
+        )}
+
+        {/* Buttons */}
+        <div className="buttons">
+          <button className="like-btn" onClick={handleLike}>
+            {likedByUser ? "Unlike" : "Like"} ({likes})
+          </button>
+
+          <button
+            className="comment-btn"
+            onClick={() =>
+              document
+                .querySelector(".add-comment")
+                .scrollIntoView({ behavior: "smooth" })
+            }
+          >
+            Comment ({comments.length})
+          </button>
+
+          <button className="delete-btn" onClick={handleDelete}>
+            Delete Post
+          </button>
+        </div>
+
+        {/* Comments */}
+        <h3>Comments</h3>
+        {comments.length === 0 ? (
+          <p>No comments yet.</p>
+        ) : (
+          <ul className="comment-list">
+            {comments.map((c) => (
+              <li key={c.id}>
+                <strong>{c.user.username}:</strong> {c.comment}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Add Comment */}
+        <div className="add-comment">
+          <AddComment postId={id} onAddComment={handleCommentAdded} />
+        </div>
+      </main>
     </div>
   );
 }

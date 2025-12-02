@@ -1,21 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import API from "../services/api";
+import { AuthContext } from "../context/AuthContext";
 
-function AddComment({ postId }) {
+function AddComment({ postId, onAddComment }) {
   const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const { user } = useContext(AuthContext);
 
-  const submitComment = (e) => {
+  const submitComment = async (e) => {
     e.preventDefault();
 
-    API.post("comments/", {
-      post: postId,
-      user: 1,     // TEMP: fixed user ID until login system added
-      comment: comment
-    }).then(() => {
-      alert("Comment added!");
+    if (!user) {
+      alert("Please login to comment.");
+      return;
+    }
+
+    if (!comment.trim()) {
+      alert("Comment cannot be empty.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const response = await API.post("comments/", {
+        post: postId,
+        comment: comment
+      });
+
+      // Update UI in parent
+      onAddComment(response.data);
+
+      // Clear the input
       setComment("");
-      window.location.reload();
-    });
+    } catch (err) {
+      console.error("Comment error:", err.response ? err.response.data : err);
+      alert("Failed to add comment. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -25,9 +48,12 @@ function AddComment({ postId }) {
         placeholder="Write a comment..."
         value={comment}
         onChange={(e) => setComment(e.target.value)}
+        disabled={submitting}
         required
       />
-      <button type="submit">Add Comment</button>
+      <button type="submit" disabled={submitting}>
+        {submitting ? "Adding..." : "Add Comment"}
+      </button>
     </form>
   );
 }

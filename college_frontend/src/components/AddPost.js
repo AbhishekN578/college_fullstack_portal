@@ -1,43 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import API from "../services/api";
+import { AuthContext } from "../context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
 import "./AddPost.css";
+
 function AddPost() {
-  const [form, setForm] = useState({
-    title: "",
-    content: "",
-    highlight: "",
-    author: 1,  // TEMP static user
-  });
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-
- 
-
+  const [form, setForm] = useState({ title: "", content: "", highlight: "" });
   const [imageFile, setImageFile] = useState(null);
+
+  if (!user) {
+    return (
+      <div className="page-container">
+        <div className="login-message">
+          <h2>Please login to add a post.</h2>
+          <p>
+            <Link to="/login">Login</Link> or <Link to="/register">Register</Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // form-data because image is included
     const formData = new FormData();
     formData.append("title", form.title);
-    formData.append("content", form.content);
     formData.append("highlight", form.highlight);
-    formData.append("author", form.author);
-// if (examFile) {
-//   formData.append("exam_file", examFile);
-// }
+    formData.append("content", form.content);
+    formData.append("author", user.id);
 
-    if (imageFile) {
-      formData.append("image", imageFile);
-    }
+    if (imageFile) formData.append("image", imageFile);
 
     try {
       await API.post("posts/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       alert("Post added successfully!");
-      window.location.href = "/";
+      navigate("/");
     } catch (err) {
       console.error(err);
       alert("Failed to add post");
@@ -45,62 +48,42 @@ function AddPost() {
   };
 
   return (
-    <div className="page-container">    
-    <form className="post-form-container" onSubmit={handleSubmit}>
-      <h2>Add New Post</h2>
+    <div className="page-container">
+      <form className="post-form-container" onSubmit={handleSubmit}>
+        <h2>Add New Post</h2>
 
-      {/* Title */}
-      <label>Title</label>
-      <input
-        className="input-box"
-        type="text"
-        placeholder="Title"
-        value={form.title}
-        onChange={(e) => setForm({ ...form, title: e.target.value })}
-        required
-      />
+        <label>Title</label>
+        <input
+          type="text"
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          required
+        />
 
-      {/* Highlight */}
-      <label>Highlight</label>
-      <input
-        className="input-box"
-        type="text"
-        placeholder="Highlight (short important line)"
-        value={form.highlight}
-        onChange={(e) => setForm({ ...form, highlight: e.target.value })}
-        required
-      />
+        <label>Highlight</label>
+        <input
+          type="text"
+          value={form.highlight}
+          onChange={(e) => setForm({ ...form, highlight: e.target.value })}
+          required
+        />
 
-      {/* Content */}
-      <label>Content</label>
-      <textarea
-        className="textarea-box"
-        placeholder="Content"
-        value={form.content}
-        onChange={(e) => setForm({ ...form, content: e.target.value })}
-        required
-      ></textarea>
-      
+        <label>Content</label>
+        <textarea
+          value={form.content}
+          onChange={(e) => setForm({ ...form, content: e.target.value })}
+          required
+        />
 
-      {/* Image Upload */}
-      <label>Upload Image</label>
-      <input
-        className="file-input"
-        type="file"
-        accept="image/*"
-        onChange={(e) => setImageFile(e.target.files[0])}
-      />
-      {/* <label>Upload file</label>
-      <input 
-      className="file-input"
-      type="file" 
-       onChange={(e) => setExamFile(e.target.files[0])} 
-     /> */}
+        <label>Upload Image</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImageFile(e.target.files[0])}
+        />
 
-
-
-      <button className="submit-button" type="submit">Add Post</button>
-    </form>
+        <button type="submit">Add Post</button>
+      </form>
     </div>
   );
 }

@@ -6,9 +6,8 @@ class Post(models.Model):
     content = models.TextField()
     image = models.ImageField(upload_to='post_images/', blank=True, null=True)
     exam_file = models.FileField(upload_to='exam_files/', blank=True, null=True)
-    likes = models.IntegerField(default=0)  # total likes count
     created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)  # Non-nullable
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title
@@ -27,10 +26,9 @@ class Comment(models.Model):
 class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    likes = models.IntegerField(default=0)
+
     class Meta:
-        unique_together = ('user', 'post')  # prevent multiple likes from same user
+        unique_together = ('user', 'post')
 
     def __str__(self):
         return f"{self.user.username} liked {self.post.title}"
